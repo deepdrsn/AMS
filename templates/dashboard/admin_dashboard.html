@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Hajiri{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h3 class="mb-0">Hi, {{ request.user.get_username }}!</h3>
+      <div class="text-muted">Attendance analytics and device logs.</div>
+    </div>
+    <a class="btn btn-sm btn-outline-danger" href="{% url 'accounts:logout' %}">Logout</a>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card"><div class="card-body"><h5 class="card-title">Late Arrivals</h5><div class="display-6">0</div></div></div>
+    </div>
+    <div class="col-md-4">
+      <div class="card"><div class="card-body"><h5 class="card-title">Absentees</h5><div class="display-6">0</div></div></div>
+    </div>
+    <div class="col-md-4">
+      <div class="card"><div class="card-body"><h5 class="card-title">Hours Worked</h5><div class="display-6">0</div></div></div>
+    </div>
+  </div>
+
+  <div class="card mt-4">
+    <div class="card-body">
+      <h5 class="card-title">Daily Attendance (placeholder)</h5>
+      <p class="text-muted mb-0">Filters + table will be implemented when Attendance query logic is complete.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

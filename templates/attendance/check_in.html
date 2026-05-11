@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Check In - Hajiri{% endblock %}
+
+{% block content %}
+<div class="d-flex">
+  <div class="border-end" style="min-width:220px;">
+    <div class="p-3 fw-bold">Hajiri</div>
+    <div class="list-group list-group-flush">
+      <a class="list-group-item list-group-item-action" href="{% url 'dashboard:intern_dashboard' %}">Dashboard</a>
+      <a class="list-group-item list-group-item-action active" href="{% url 'attendance:check_in' %}">Check In</a>
+      <a class="list-group-item list-group-item-action" href="{% url 'attendance:check_out' %}">Check Out</a>
+      <a class="list-group-item list-group-item-action" href="{% url 'attendance:history' %}">History</a>
+      <a class="list-group-item list-group-item-action text-danger" href="{% url 'accounts:logout' %}">Logout</a>
+    </div>
+  </div>
+  <div class="flex-grow-1 p-4">
+    <h3>Check In</h3>
+
+    {% if form_errors %}
+      <div class="alert alert-danger">{{ form_errors }}</div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-body">
+        <p class="text-muted">We will capture your browser location. Attendance is allowed only within the office radius.</p>
+
+        <form method="post" id="checkInForm" action="{% url 'attendance:check_in' %}">
+          {% csrf_token %}
+          <input type="hidden" name="latitude" id="latitude" />
+          <input type="hidden" name="longitude" id="longitude" />
+
+          <button type="button" class="btn btn-primary" onclick="getLocationAndSubmit('check-in')">
+            Mark Check In
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function getLocationAndSubmit(action) {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        document.getElementById('latitude').value = pos.coords.latitude;
+        document.getElementById('longitude').value = pos.coords.longitude;
+        document.getElementById('checkInForm').submit();
+      },
+      (err) => {
+        alert('Location permission denied or unavailable: ' + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }
+</script>
+{% endblock %}
+

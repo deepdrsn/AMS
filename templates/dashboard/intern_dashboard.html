@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Intern Dashboard - Hajiri{% endblock %}
+
+{% block content %}
+<div class="d-flex">
+  <div class="border-end" style="min-width:220px;">
+    <div class="p-3 fw-bold">Hajiri</div>
+    <div class="list-group list-group-flush">
+      <a class="list-group-item list-group-item-action" href="{% url 'dashboard:intern_dashboard' %}">Dashboard</a>
+      <a class="list-group-item list-group-item-action" href="{% url 'attendance:check_in' %}">Check In</a>
+      <a class="list-group-item list-group-item-action" href="{% url 'attendance:check_out' %}">Check Out</a>
+      <a class="list-group-item list-group-item-action" href="{% url 'attendance:history' %}">History</a>
+      <a class="list-group-item list-group-item-action text-danger" href="{% url 'accounts:logout' %}">Logout</a>
+    </div>
+  </div>
+
+  <div class="flex-grow-1 p-4">
+    <h3>Hi, {{ request.user.get_username }}!</h3>
+    <p class="text-muted">Select an action from the sidebar.</p>
+
+    <div class="row g-3 mt-2">
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Today</h5>
+            <p class="card-text">(Attendance summary will appear here.)</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Quick Tips</h5>
+            <ul class="mb-0">
+              <li>Grant location permission for check-in/out.</li>
+              <li>Check-in must happen before check-out.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
