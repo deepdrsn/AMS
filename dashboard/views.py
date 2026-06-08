@@ -15,7 +15,7 @@ def intern_dashboard(request):
 
 @login_required
 def admin_dashboard(request):
-    if not getattr(request.user, 'role', None) == 'admin':
+    if not (request.user.is_superuser or getattr(request.user, 'role', None) == 'admin'):
         return HttpResponseForbidden('Admins only')
     return render(request, 'dashboard/admin_dashboard.html')
 

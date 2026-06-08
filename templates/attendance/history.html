@@ -3,65 +3,150 @@
 {% block title %}Attendance History - Hajiri{% endblock %}
 
 {% block content %}
-<div class="d-flex">
-  <div class="border-end" style="min-width:220px;">
-    <div class="p-3 fw-bold">Hajiri</div>
-    <div class="list-group list-group-flush">
-      <a class="list-group-item list-group-item-action" href="{% url 'dashboard:intern_dashboard' %}">Dashboard</a>
-      <a class="list-group-item list-group-item-action" href="{% url 'attendance:check_in' %}">Check In</a>
-      <a class="list-group-item list-group-item-action" href="{% url 'attendance:check_out' %}">Check Out</a>
-      <a class="list-group-item list-group-item-action active" href="{% url 'attendance:history' %}">History</a>
-      <a class="list-group-item list-group-item-action text-danger" href="{% url 'accounts:logout' %}">Logout</a>
+<div class="page-header">
+  <div class="d-flex align-items-center justify-content-between">
+    <div>
+      <h1><i class="bi bi-calendar-check"></i> Attendance History</h1>
+      <p class="text-muted">Your complete attendance records</p>
+    </div>
+    {% if request.user.role == 'admin' %}
+      <a class="btn btn-outline-primary" href="{% url 'attendance:export_csv' %}?from=2000-01-01&to={% now 'Y-m-d' %}">
+        <i class="bi bi-download"></i> Export CSV
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <div style="font-size: 2rem; color: #10b981;">
+          <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <h6 class="card-title mt-2">Total Days</h6>
+        <h3 class="mb-0">{{ attendances|length }}</h3>
+      </div>
     </div>
   </div>
-
-  <div class="flex-grow-1 p-4">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <h3 class="mb-0">Attendance History</h3>
-      {% if request.user.role == 'admin' %}
-        <a class="btn btn-sm btn-outline-primary" href="{% url 'attendance:export_csv' %}?from=2000-01-01&to={% now 'Y-m-d' %}">Export CSV</a>
-      {% endif %}
-
-
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <div style="font-size: 2rem; color: #f59e0b;">
+          <i class="bi bi-exclamation-circle-fill"></i>
+        </div>
+        <h6 class="card-title mt-2">Late Days</h6>
+        <h3 class="mb-0">{{ late_count }}</h3>
+      </div>
     </div>
-
-    <div class="table-responsive">
-      <table class="table table-striped align-middle">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Check In</th>
-            <th>Check Out</th>
-            <th>Status</th>
-            <th>Late</th>
-            <th>Total Hours</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for a in attendances %}
-            <tr>
-              <td>{{ a.date }}</td>
-              <td>{{ a.check_in_time }}</td>
-              <td>{{ a.check_out_time }}</td>
-              <td>{{ a.attendance_status }}</td>
-              <td>
-                {% if a.is_late %}
-                  <span class="badge text-bg-warning">Yes{% if a.late_minutes %} ({{ a.late_minutes }}m){% endif %}</span>
-                {% else %}
-                  <span class="badge text-bg-success">No</span>
-                {% endif %}
-              </td>
-              <td>{{ a.total_working_hours|floatformat:2 }}</td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td colspan="6" class="text-muted">No attendance records yet.</td>
-            </tr>
-
-          {% endfor %}
-        </tbody>
-      </table>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <div style="font-size: 2rem; color: #3b82f6;">
+          <i class="bi bi-clock-fill"></i>
+        </div>
+        <h6 class="card-title mt-2">Avg Hours</h6>
+        <h3 class="mb-0">{{ avg_hours|floatformat:1 }}</h3>
+      </div>
     </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <div style="font-size: 2rem; color: #8b5cf6;">
+          <i class="bi bi-pause-circle-fill"></i>
+        </div>
+        <h6 class="card-title mt-2">Break Hours</h6>
+        <h3 class="mb-0">{{ break_hours|floatformat:1 }}</h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Attendance Table -->
+<div class="card">
+  <div class="card-header">
+    <i class="bi bi-table"></i> Attendance Records
+    <span class="badge bg-secondary float-end">{{ attendances|length }} records</span>
+  </div>
+  <div class="card-body p-0">
+    {% if attendances %}
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Check In</th>
+              <th>Check Out</th>
+              <th>Status</th>
+              <th>Late</th>
+              <th>Working Hours</th>
+              <th>Break Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in attendances %}
+              <tr>
+                <td>
+                  <strong>{{ a.date }}</strong>
+                </td>
+                <td>
+                  {% if a.check_in_time %}
+                    <span class="badge bg-success">{{ a.check_in_time|time:"H:i" }}</span>
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if a.check_out_time %}
+                    <span class="badge bg-danger">{{ a.check_out_time|time:"H:i" }}</span>
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if a.status == 'present' %}
+                    <span class="status-badge status-in">Present</span>
+                  {% elif a.status == 'late' %}
+                    <span class="status-badge status-break">Late</span>
+                  {% elif a.status == 'absent' %}
+                    <span class="status-badge status-out">Absent</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if a.is_late %}
+                    <i class="bi bi-exclamation-circle text-warning"></i> Yes
+                  {% else %}
+                    <i class="bi bi-check-circle text-success"></i> No
+                  {% endif %}
+                </td>
+                <td>
+                  {% if a.total_working_hours %}
+                    {{ a.total_working_hours|floatformat:1 }} hrs
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td>
+                  {% if a.total_break_minutes > 0 %}
+                    {{ a.total_break_minutes }} min
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="p-4 text-center text-muted">
+        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+        <p class="mt-2">No attendance records yet</p>
+      </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

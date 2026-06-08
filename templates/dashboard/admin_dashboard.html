@@ -3,31 +3,141 @@
 {% block title %}Admin Dashboard - Hajiri{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <div>
-      <h3 class="mb-0">Hi, {{ request.user.get_username }}!</h3>
-      <div class="text-muted">Attendance analytics and device logs.</div>
+<div class="page-header">
+  <h1><i class="bi bi-speedometer2"></i> Admin Dashboard</h1>
+  <p class="text-muted">Welcome back, <strong>{{ request.user.get_full_name|default:request.user.get_username }}</strong></p>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+  <div class="col-md-6">
+    <a href="{% url 'attendance:admin_office_status' %}" class="card text-decoration-none" style="border: none; cursor: pointer; transition: all 0.3s;">
+      <div class="card-body py-4">
+        <div class="d-flex align-items-center">
+          <div style="font-size: 2rem; color: #10b981; margin-right: 1rem;">
+            <i class="bi bi-people"></i>
+          </div>
+          <div>
+            <h6 class="mb-0">Office Status</h6>
+            <p class="text-muted small mb-0">See who's in/out of office</p>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-6">
+    <a href="{% url 'attendance:admin_user_history' %}" class="card text-decoration-none" style="border: none; cursor: pointer; transition: all 0.3s;">
+      <div class="card-body py-4">
+        <div class="d-flex align-items-center">
+          <div style="font-size: 2rem; color: #3b82f6; margin-right: 1rem;">
+            <i class="bi bi-file-earmark"></i>
+          </div>
+          <div>
+            <h6 class="mb-0">User History</h6>
+            <p class="text-muted small mb-0">View detailed attendance records</p>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-6">
+    <a href="{% url 'accounts:manage_interns' %}" class="card text-decoration-none" style="border: none; cursor: pointer; transition: all 0.3s;">
+      <div class="card-body py-4">
+        <div class="d-flex align-items-center">
+          <div style="font-size: 2rem; color: #0ea5e9; margin-right: 1rem;">
+            <i class="bi bi-person-plus"></i>
+          </div>
+          <div>
+            <h6 class="mb-0">Manage Interns</h6>
+            <p class="text-muted small mb-0">Add or update intern accounts</p>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-6">
+    <a href="{% url 'attendance:export_csv' %}" class="card text-decoration-none" style="border: none; cursor: pointer; transition: all 0.3s;">
+      <div class="card-body py-4">
+        <div class="d-flex align-items-center">
+          <div style="font-size: 2rem; color: #f59e0b; margin-right: 1rem;">
+            <i class="bi bi-download"></i>
+          </div>
+          <div>
+            <h6 class="mb-0">Export Reports</h6>
+            <p class="text-muted small mb-0">Download attendance CSV</p>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- Admin Information -->
+<div class="row">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header bg-light">
+        <i class="bi bi-info-circle"></i> Account Information
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <label class="text-muted small">Full Name</label>
+            <p class="fw-bold">{{ request.user.get_full_name|default:request.user.username }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Email</label>
+            <p class="fw-bold">{{ request.user.email }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Username</label>
+            <p class="fw-bold">{{ request.user.username }}</p>
+          </div>
+          <div class="col-md-6">
+            <label class="text-muted small">Role</label>
+            <p class="fw-bold">
+              {% if request.user.is_superuser %}
+                <span class="badge bg-warning">Superadmin</span>
+              {% else %}
+                <span class="badge bg-danger">Administrator</span>
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
-    <a class="btn btn-sm btn-outline-danger" href="{% url 'accounts:logout' %}">Logout</a>
   </div>
 
-  <div class="row g-3">
-    <div class="col-md-4">
-      <div class="card"><div class="card-body"><h5 class="card-title">Late Arrivals</h5><div class="display-6">0</div></div></div>
-    </div>
-    <div class="col-md-4">
-      <div class="card"><div class="card-body"><h5 class="card-title">Absentees</h5><div class="display-6">0</div></div></div>
-    </div>
-    <div class="col-md-4">
-      <div class="card"><div class="card-body"><h5 class="card-title">Hours Worked</h5><div class="display-6">0</div></div></div>
-    </div>
-  </div>
-
-  <div class="card mt-4">
-    <div class="card-body">
-      <h5 class="card-title">Daily Attendance (placeholder)</h5>
-      <p class="text-muted mb-0">Filters + table will be implemented when Attendance query logic is complete.</p>
+  <!-- Features -->
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header bg-light">
+        <i class="bi bi-gear"></i> Features
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled">
+          <li class="mb-2">
+            <i class="bi bi-check-circle text-success"></i>
+            <strong>Real-time Status</strong> - Monitor who's in/out
+          </li>
+          <li class="mb-2">
+            <i class="bi bi-check-circle text-success"></i>
+            <strong>Break Tracking</strong> - See break logs and durations
+          </li>
+          <li class="mb-2">
+            <i class="bi bi-check-circle text-success"></i>
+            <strong>Detailed History</strong> - View user attendance records
+          </li>
+          <li class="mb-2">
+            <i class="bi bi-check-circle text-success"></i>
+            <strong>Export CSV</strong> - Download attendance data
+          </li>
+          <li>
+            <i class="bi bi-check-circle text-success"></i>
+            <strong>Late Detection</strong> - Automatic late arrival flagging
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </div>

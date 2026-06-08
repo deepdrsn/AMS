@@ -3,37 +3,82 @@
 {% block title %}Check Out - Hajiri{% endblock %}
 
 {% block content %}
-<div class="d-flex">
-  <div class="border-end" style="min-width:220px;">
-    <div class="p-3 fw-bold">Hajiri</div>
-    <div class="list-group list-group-flush">
-      <a class="list-group-item list-group-item-action" href="{% url 'dashboard:intern_dashboard' %}">Dashboard</a>
-      <a class="list-group-item list-group-item-action" href="{% url 'attendance:check_in' %}">Check In</a>
-      <a class="list-group-item list-group-item-action active" href="{% url 'attendance:check_out' %}">Check Out</a>
-      <a class="list-group-item list-group-item-action" href="{% url 'attendance:history' %}">History</a>
-      <a class="list-group-item list-group-item-action text-danger" href="{% url 'accounts:logout' %}">Logout</a>
-    </div>
+<div class="page-header">
+  <h1><i class="bi bi-door-closed"></i> Check Out</h1>
+  <p class="text-muted">Mark your departure from the office</p>
+</div>
+
+{% if form_errors %}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-circle"></i> {{ form_errors }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
   </div>
-  <div class="flex-grow-1 p-4">
-    <h3>Check Out</h3>
+{% endif %}
 
-    {% if form_errors %}
-      <div class="alert alert-danger">{{ form_errors }}</div>
-    {% endif %}
-
+<div class="row">
+  <div class="col-lg-6">
     <div class="card">
-      <div class="card-body">
-        <p class="text-muted">We will capture your browser location. Attendance is allowed only within the office radius.</p>
+      <div class="card-body text-center py-5">
+        <div style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;">
+          <i class="bi bi-door-closed"></i>
+        </div>
+        
+        <p class="text-muted mb-4">
+          <small>We will capture your browser location. You can only check out from within the office premises.</small>
+        </p>
 
         <form method="post" id="checkOutForm" action="{% url 'attendance:check_out' %}">
           {% csrf_token %}
           <input type="hidden" name="latitude" id="latitude" />
           <input type="hidden" name="longitude" id="longitude" />
+          <input type="hidden" name="accuracy" id="accuracy" />
 
-          <button type="button" class="btn btn-success" onclick="getLocationAndSubmit('check-out')">
-            Mark Check Out
+          <button type="button" class="btn btn-danger btn-lg px-5" onclick="getLocationAndSubmit('check-out')">
+            <i class="bi bi-geo-alt-fill"></i> Mark Check Out
           </button>
         </form>
+
+        <div class="mt-4 p-3 bg-light rounded">
+          <small class="text-muted">
+            <i class="bi bi-info-circle"></i>
+            Make sure location services are enabled on your device
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header bg-light">
+        <i class="bi bi-info-circle"></i> How to Check Out
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <h6 class="fw-bold"><i class="bi bi-1-circle"></i> Enable Location</h6>
+          <p class="text-muted small">Your browser will ask for location permission. Click "Allow".</p>
+        </div>
+        <div class="mb-3">
+          <h6 class="fw-bold"><i class="bi bi-2-circle"></i> Verify Location</h6>
+          <p class="text-muted small">Make sure you're still within the office radius.</p>
+        </div>
+        <div class="mb-0">
+          <h6 class="fw-bold"><i class="bi bi-3-circle"></i> Click Check Out</h6>
+          <p class="text-muted small">Click the "Mark Check Out" button to record your departure.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header bg-light">
+        <i class="bi bi-shield-check"></i> Requirements
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled small text-muted">
+          <li><i class="bi bi-check-circle"></i> Already checked in today</li>
+          <li><i class="bi bi-check-circle"></i> Within office premises</li>
+          <li><i class="bi bi-check-circle"></i> Not already checked out today</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -48,8 +93,15 @@
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        const acc = pos.coords.accuracy || 0;
+        const MAX_ACCEPTABLE = 500; // meters
+        if (acc > MAX_ACCEPTABLE) {
+          alert('Location accuracy is low (' + Math.round(acc) + ' m). Please enable high-accuracy location (GPS/Wi-Fi) and try again.');
+          return;
+        }
         document.getElementById('latitude').value = pos.coords.latitude;
         document.getElementById('longitude').value = pos.coords.longitude;
+        document.getElementById('accuracy').value = acc;
         document.getElementById('checkOutForm').submit();
       },
       (err) => {

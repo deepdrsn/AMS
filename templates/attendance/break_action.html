@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}Break - Hajiri{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Manage Break</h1>
+</div>
+
+{% if form_errors %}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-circle"></i> {{ form_errors }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+{% endif %}
+
+<div class="row">
+  <div class="col-lg-6">
+    <!-- Current Status Card -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="bi bi-info-circle"></i> Current Status
+      </div>
+      <div class="card-body">
+        {% if attendance %}
+          <div class="mb-3">
+            <label class="text-muted small">Check In Time</label>
+            <p class="fw-bold">
+              {% if attendance.check_in_time %}
+                {{ attendance.check_in_time|time:"H:i" }}
+              {% else %}
+                Not checked in
+              {% endif %}
+            </p>
+          </div>
+          <div class="mb-3">
+            <label class="text-muted small">Break Status</label>
+            <p>
+              {% if active_break %}
+                <span class="status-badge status-break">
+                  <i class="bi bi-pause-fill"></i> On Break
+                </span>
+                <small class="text-muted d-block mt-2">
+                  Break started at {{ active_break.start_time|time:"H:i:s" }}
+                </small>
+              {% else %}
+                {% if attendance.check_in_time and not attendance.check_out_time %}
+                  <span class="status-badge status-in">
+                    <i class="bi bi-check-circle-fill"></i> Working
+                  </span>
+                {% elif attendance.check_out_time %}
+                  <span class="status-badge status-out">
+                    <i class="bi bi-x-circle-fill"></i> Checked Out
+                  </span>
+                {% endif %}
+              {% endif %}
+            </p>
+          </div>
+          {% if attendance.total_break_minutes > 0 %}
+            <div class="mb-0">
+              <label class="text-muted small">Total Break Time</label>
+              <p class="fw-bold">{{ attendance.total_break_minutes }} minutes</p>
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle"></i> Please check in first
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Break Actions Card -->
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-clock"></i> Take a Break
+      </div>
+      <div class="card-body">
+        {% if attendance and attendance.check_in_time %}
+          {% if active_break %}
+            <!-- End Break Button -->
+            <p class="text-muted mb-3">
+              <i class="bi bi-info-circle"></i>
+              <small>You must be inside the office to end your break.</small>
+            </p>
+            <form method="post" id="breakForm" action="{% url 'attendance:break_action' %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="end" />
+              <input type="hidden" name="latitude" id="latitude" />
+              <input type="hidden" name="longitude" id="longitude" />
+              <input type="hidden" name="accuracy" id="accuracy" />
+              
+              <button type="button" class="btn btn-warning w-100" onclick="getLocationAndSubmit()">
+                <i class="bi bi-stop-fill"></i> End Break
+              </button>
+            </form>
+          {% else %}
+            <!-- Start Break Button -->
+            <p class="text-muted mb-3">
+              <i class="bi bi-info-circle"></i>
+              <small>You can start a break anytime, but can only end it inside the office.</small>
+            </p>
+            <form method="post" id="breakForm" action="{% url 'attendance:break_action' %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="start" />
+              <input type="hidden" name="latitude" id="latitude" />
+              <input type="hidden" name="longitude" id="longitude" />
+              <input type="hidden" name="accuracy" id="accuracy" />
+              
+              <button type="button" class="btn btn-warning w-100" onclick="getLocationAndSubmit()">
+                <i class="bi bi-play-fill"></i> Start Break
+              </button>
+            </form>
+          {% endif %}
+        {% else %}
+          <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle"></i> Check in first to take a break
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Break History Card -->
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-clock-history"></i> Break History
+      </div>
+      <div class="card-body">
+        {% if attendance %}
+          {% with breaks=attendance.intern.breaks.all %}
+            {% if breaks %}
+              <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                  <thead>
+                    <tr>
+                      <th>Start Time</th>
+                      <th>End Time</th>
+                      <th>Duration</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for break in breaks|dictsort:"start_time"|slice:"-5:" %}
+                      <tr>
+                        <td>{{ break.start_time|time:"H:i:s" }}</td>
+                        <td>
+                          {% if break.end_time %}
+                            {{ break.end_time|time:"H:i:s" }}
+                          {% else %}
+                            <span class="badge bg-warning">Active</span>
+                          {% endif %}
+                        </td>
+                        <td>
+                          {% if break.duration_minutes > 0 %}
+                            {{ break.duration_minutes }} min
+                          {% else %}
+                            -
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="text-muted mb-0">No breaks recorded today</p>
+            {% endif %}
+          {% endwith %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function getLocationAndSubmit() {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const acc = pos.coords.accuracy || 0;
+        const MAX_ACCEPTABLE = 500; // meters
+        if (acc > MAX_ACCEPTABLE) {
+          alert('Location accuracy is low (' + Math.round(acc) + ' m). Please enable high-accuracy location (GPS/Wi-Fi) and try again.');
+          return;
+        }
+        document.getElementById('latitude').value = pos.coords.latitude;
+        document.getElementById('longitude').value = pos.coords.longitude;
+        document.getElementById('accuracy').value = acc;
+        document.getElementById('breakForm').submit();
+      },
+      (err) => {
+        alert('Location permission denied or unavailable: ' + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }
+</script>
+{% endblock %}

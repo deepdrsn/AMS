@@ -3,40 +3,147 @@
 {% block title %}Intern Dashboard - Hajiri{% endblock %}
 
 {% block content %}
-<div class="d-flex">
-  <div class="border-end" style="min-width:220px;">
-    <div class="p-3 fw-bold">Hajiri</div>
-    <div class="list-group list-group-flush">
-      <a class="list-group-item list-group-item-action" href="{% url 'dashboard:intern_dashboard' %}">Dashboard</a>
-      <a class="list-group-item list-group-item-action" href="{% url 'attendance:check_in' %}">Check In</a>
-      <a class="list-group-item list-group-item-action" href="{% url 'attendance:check_out' %}">Check Out</a>
-      <a class="list-group-item list-group-item-action" href="{% url 'attendance:history' %}">History</a>
-      <a class="list-group-item list-group-item-action text-danger" href="{% url 'accounts:logout' %}">Logout</a>
-    </div>
+<div class="page-header">
+  <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+  <p class="text-muted">Welcome back, <strong>{{ request.user.get_full_name|default:request.user.get_username }}</strong></p>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+  <div class="col-md-3">
+    <a href="{% url 'attendance:check_in' %}" class="card text-decoration-none" style="border: none; cursor: pointer; transition: all 0.3s;">
+      <div class="card-body text-center py-4">
+        <div style="font-size: 2.5rem; color: #10b981; margin-bottom: 0.5rem;">
+          <i class="bi bi-door-open"></i>
+        </div>
+        <h6 class="card-title mb-1">Check In</h6>
+        <p class="text-muted small mb-0">Mark arrival</p>
+      </div>
+    </a>
   </div>
+  <div class="col-md-3">
+    <a href="{% url 'attendance:check_out' %}" class="card text-decoration-none" style="border: none; cursor: pointer; transition: all 0.3s;">
+      <div class="card-body text-center py-4">
+        <div style="font-size: 2.5rem; color: #ef4444; margin-bottom: 0.5rem;">
+          <i class="bi bi-door-closed"></i>
+        </div>
+        <h6 class="card-title mb-1">Check Out</h6>
+        <p class="text-muted small mb-0">Mark departure</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-3">
+    <a href="{% url 'attendance:break_action' %}" class="card text-decoration-none" style="border: none; cursor: pointer; transition: all 0.3s;">
+      <div class="card-body text-center py-4">
+        <div style="font-size: 2.5rem; color: #f59e0b; margin-bottom: 0.5rem;">
+          <i class="bi bi-pause-circle"></i>
+        </div>
+        <h6 class="card-title mb-1">Break</h6>
+        <p class="text-muted small mb-0">Manage breaks</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-3">
+    <a href="{% url 'attendance:history' %}" class="card text-decoration-none" style="border: none; cursor: pointer; transition: all 0.3s;">
+      <div class="card-body text-center py-4">
+        <div style="font-size: 2.5rem; color: #3b82f6; margin-bottom: 0.5rem;">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <h6 class="card-title mb-1">History</h6>
+        <p class="text-muted small mb-0">View records</p>
+      </div>
+    </a>
+  </div>
+</div>
 
-  <div class="flex-grow-1 p-4">
-    <h3>Hi, {{ request.user.get_username }}!</h3>
-    <p class="text-muted">Select an action from the sidebar.</p>
-
-    <div class="row g-3 mt-2">
-      <div class="col-md-4">
+<!-- Today's Summary -->
+<div class="row">
+  <div class="col-lg-8">
+    {% now "Y-m-d" as today_date %}
+    {% for attendance in attendance_records %}
+      {% if attendance.date == today_date %}
         <div class="card">
+          <div class="card-header bg-light">
+            <i class="bi bi-calendar-today"></i> Today's Summary
+          </div>
           <div class="card-body">
-            <h5 class="card-title">Today</h5>
-            <p class="card-text">(Attendance summary will appear here.)</p>
+            <div class="row">
+              <div class="col-md-6">
+                <label class="text-muted small">Check In</label>
+                <p class="fw-bold">
+                  {% if attendance.check_in_time %}
+                    <span class="badge bg-success">{{ attendance.check_in_time|time:"H:i" }}</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Not checked in</span>
+                  {% endif %}
+                </p>
+              </div>
+              <div class="col-md-6">
+                <label class="text-muted small">Check Out</label>
+                <p class="fw-bold">
+                  {% if attendance.check_out_time %}
+                    <span class="badge bg-danger">{{ attendance.check_out_time|time:"H:i" }}</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Not checked out</span>
+                  {% endif %}
+                </p>
+              </div>
+              <div class="col-md-6">
+                <label class="text-muted small">Status</label>
+                <p class="fw-bold">
+                  {% if attendance.is_on_break %}
+                    <span class="status-badge status-break">On Break</span>
+                  {% elif attendance.check_in_time and attendance.check_out_time %}
+                    <span class="status-badge status-out">Checked Out</span>
+                  {% elif attendance.check_in_time %}
+                    <span class="status-badge status-in">Working</span>
+                  {% else %}
+                    <span class="status-badge" style="background: #e0e7ff; color: #3730a3;">Idle</span>
+                  {% endif %}
+                </p>
+              </div>
+              <div class="col-md-6">
+                <label class="text-muted small">Working Hours</label>
+                <p class="fw-bold">
+                  {% if attendance.total_working_hours %}
+                    {{ attendance.total_working_hours|floatformat:1 }} hrs
+                  {% else %}
+                    -
+                  {% endif %}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
+      {% endif %}
+    {% empty %}
+      <div class="card">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-inbox" style="font-size: 2rem; color: #cbd5e1;"></i>
+          <p class="mt-2 text-muted">No attendance record for today yet</p>
+        </div>
       </div>
-      <div class="col-md-8">
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title">Quick Tips</h5>
-            <ul class="mb-0">
-              <li>Grant location permission for check-in/out.</li>
-              <li>Check-in must happen before check-out.</li>
-            </ul>
-          </div>
+    {% endfor %}
+  </div>
+
+  <!-- Tips -->
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header bg-light">
+        <i class="bi bi-lightbulb"></i> Tips & Reminders
+      </div>
+      <div class="card-body small">
+        <div class="mb-3">
+          <h6 class="fw-bold">Location Required</h6>
+          <p class="text-muted mb-0">Always enable location services for check-in/out</p>
+        </div>
+        <div class="mb-3">
+          <h6 class="fw-bold">Break Rules</h6>
+          <p class="text-muted mb-0">Start breaks anywhere, end only inside office</p>
+        </div>
+        <div>
+          <h6 class="fw-bold">Late Arrivals</h6>
+          <p class="text-muted mb-0">Arriving after 10:00 AM is marked as late</p>
         </div>
       </div>
     </div>
